@@ -3,746 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P2P Local Chat</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            width: 95%;
-            max-width: 800px;
-            height: 90vh;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            padding: 20px;
-            color: white;
-            text-align: center;
-        }
-
-        .header h1 {
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-
-        .status {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .peers-section {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .peers-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .peer-item {
-            background: #007bff;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .peer-item:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        .peer-item.connected {
-            background: #28a745;
-        }
-
-        .peer-item.connecting {
-            background: #ffc107;
-            color: #333;
-        }
-
-        .chat-area {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #f8f9fa;
-        }
-
-        .message {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: flex-start;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message.own {
-            flex-direction: row-reverse;
-        }
-
-        .message-bubble {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            word-wrap: break-word;
-        }
-
-        .message.own .message-bubble {
-            background: #007bff;
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message:not(.own) .message-bubble {
-            background: white;
-            color: #333;
-            border: 1px solid #e9ecef;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message-info {
-            font-size: 11px;
-            color: #666;
-            margin: 0 10px;
-            align-self: flex-end;
-        }
-
-        .system-message {
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-            margin: 10px 0;
-            font-style: italic;
-        }
-
-        .file-message {
-            background: #e3f2fd !important;
-            border: 1px solid #2196f3 !important;
-        }
-
-        .file-download {
-            display: inline-flex;
-            align-items: center;
-            background: #2196f3;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            text-decoration: none;
-            margin-top: 8px;
-            font-size: 12px;
-        }
-
-        .input-area {
-            background: white;
-            padding: 20px;
-            border-top: 1px solid #e9ecef;
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .message-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #e9ecef;
-            border-radius: 25px;
-            outline: none;
-            font-size: 14px;
-            resize: none;
-            min-height: 44px;
-            max-height: 100px;
-        }
-
-        .message-input:focus {
-            border-color: #007bff;
-        }
-
-        .send-btn, .file-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .send-btn:hover, .file-btn:hover {
-            background: #0056b3;
-            transform: scale(1.05);
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: #e9ecef;
-            border-radius: 2px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #28a745;
-            transition: width 0.3s ease;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                width: 100%;
-                height: 100vh;
-                border-radius: 0;
-            }
-            
-            .message-bubble {
-                max-width: 85%;
-            }
-        }
-    </style>
+    <title>P2P WebChat</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌐 P2P Local Chat</h1>
-            <div class="status" id="status">Connecting to signaling server...</div>
-        </div>
-
-        <div class="peers-section">
-            <strong>Available Devices:</strong>
-            <div class="peers-list" id="peersList">
-                <div style="color: #666; font-size: 12px;">No other devices found</div>
-            </div>
-        </div>
-
-        <div class="chat-area" id="chatArea">
-            <div class="system-message">
-                🚀 Welcome! Connect to other devices on your network to start chatting.
-            </div>
-        </div>
-
-        <div class="input-area">
-            <textarea 
-                id="messageInput" 
-                class="message-input" 
-                placeholder="Type your message..." 
-                rows="1"
-            ></textarea>
-            <input type="file" id="fileInput" class="file-input">
-            <button class="file-btn" id="fileBtn" title="Send File">
-                📎
-            </button>
-            <button class="send-btn" id="sendBtn" title="Send Message">
-                ➤
-            </button>
+    <!-- User Setup Modal -->
+    <div id="userSetupModal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to P2P WebChat</h2>
+            <p>Enter your display name to get started:</p>
+            <input type="text" id="displayNameInput" placeholder="Your display name" maxlength="30">
+            <button id="joinNetworkBtn">Join Network</button>
         </div>
     </div>
 
-    <script>
-        class P2PChat {
-            constructor() {
-                this.socket = null;
-                this.peers = new Map(); // Map of peerId -> RTCPeerConnection
-                this.dataChannels = new Map(); // Map of peerId -> RTCDataChannel
-                this.myId = null;
-                this.fileTransfers = new Map(); // Track ongoing file transfers
-                
-                this.initSocket();
-                this.initUI();
-            }
+    <!-- Main App Container -->
+    <div id="appContainer" class="hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>P2P WebChat</h1>
+            <div class="user-info">
+                <span id="currentUserName"></span>
+                <span id="connectionStatus" class="status-indicator"></span>
+            </div>
+        </header>
 
-            initSocket() {
-                this.socket = io();
-                
-                this.socket.on('connect', () => {
-                    this.myId = this.socket.id;
-                    this.updateStatus('Connected to signaling server');
-                    console.log('Connected to signaling server:', this.myId);
-                });
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="lobby">Lobby</button>
+            <button class="tab-btn" data-tab="public-rooms">Public Rooms</button>
+            <button class="tab-btn" data-tab="private-rooms">Private Rooms</button>
+            <button class="tab-btn" data-tab="peers">Peers</button>
+        </nav>
 
-                this.socket.on('peer-list-updated', (peerIds) => {
-                    this.updatePeersList(peerIds.filter(id => id !== this.myId));
-                });
-
-                this.socket.on('offer', (data) => {
-                    this.handleOffer(data);
-                });
-
-                this.socket.on('answer', (data) => {
-                    this.handleAnswer(data);
-                });
-
-                this.socket.on('ice-candidate', (data) => {
-                    this.handleIceCandidate(data);
-                });
-
-                this.socket.on('disconnect', () => {
-                    this.updateStatus('Disconnected from signaling server');
-                });
-            }
-
-            initUI() {
-                const messageInput = document.getElementById('messageInput');
-                const sendBtn = document.getElementById('sendBtn');
-                const fileBtn = document.getElementById('fileBtn');
-                const fileInput = document.getElementById('fileInput');
-
-                // Auto-resize textarea
-                messageInput.addEventListener('input', () => {
-                    messageInput.style.height = 'auto';
-                    messageInput.style.height = messageInput.scrollHeight + 'px';
-                });
-
-                // Send message on Enter (but allow Shift+Enter for new line)
-                messageInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        this.sendMessage();
-                    }
-                });
-
-                sendBtn.addEventListener('click', () => this.sendMessage());
-                
-                fileBtn.addEventListener('click', () => fileInput.click());
-                
-                fileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        this.sendFile(e.target.files[0]);
-                        e.target.value = ''; // Reset file input
-                    }
-                });
-            }
-
-            updateStatus(message) {
-                document.getElementById('status').textContent = message;
-            }
-
-            updatePeersList(peerIds) {
-                const peersList = document.getElementById('peersList');
-                
-                if (peerIds.length === 0) {
-                    peersList.innerHTML = '<div style="color: #666; font-size: 12px;">No other devices found</div>';
-                    return;
-                }
-
-                peersList.innerHTML = peerIds.map(peerId => {
-                    const shortId = peerId.substring(0, 8);
-                    const status = this.dataChannels.has(peerId) ? 'connected' : 
-                                 this.peers.has(peerId) ? 'connecting' : '';
-                    return `<div class="peer-item ${status}" data-peer-id="${peerId}">${shortId}</div>`;
-                }).join('');
-
-                // Add click handlers
-                peersList.querySelectorAll('.peer-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const peerId = item.dataset.peerId;
-                        if (!this.peers.has(peerId)) {
-                            this.connectToPeer(peerId);
-                        }
-                    });
-                });
-            }
-
-            async connectToPeer(peerId) {
-                console.log('Connecting to peer:', peerId);
-                this.addSystemMessage(`Connecting to ${peerId.substring(0, 8)}...`);
-
-                const peerConnection = new RTCPeerConnection({
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
-                    ]
-                });
-
-                this.peers.set(peerId, peerConnection);
-
-                // Create data channel
-                const dataChannel = peerConnection.createDataChannel('messages', {
-                    ordered: true
-                });
-                
-                this.setupDataChannel(dataChannel, peerId);
-
-                // Handle ICE candidates
-                peerConnection.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        this.socket.emit('ice-candidate', {
-                            target: peerId,
-                            candidate: event.candidate
-                        });
-                    }
-                };
-
-                // Create and send offer
-                try {
-                    const offer = await peerConnection.createOffer();
-                    await peerConnection.setLocalDescription(offer);
-                    
-                    this.socket.emit('offer', {
-                        target: peerId,
-                        offer: offer
-                    });
-                } catch (error) {
-                    console.error('Error creating offer:', error);
-                }
-            }
-
-            async handleOffer(data) {
-                console.log('Received offer from:', data.sender);
-                
-                const peerConnection = new RTCPeerConnection({
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
-                    ]
-                });
-
-                this.peers.set(data.sender, peerConnection);
-
-                // Handle incoming data channel
-                peerConnection.ondatachannel = (event) => {
-                    this.setupDataChannel(event.channel, data.sender);
-                };
-
-                // Handle ICE candidates
-                peerConnection.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        this.socket.emit('ice-candidate', {
-                            target: data.sender,
-                            candidate: event.candidate
-                        });
-                    }
-                };
-
-                try {
-                    await peerConnection.setRemoteDescription(data.offer);
-                    const answer = await peerConnection.createAnswer();
-                    await peerConnection.setLocalDescription(answer);
-                    
-                    this.socket.emit('answer', {
-                        target: data.sender,
-                        answer: answer
-                    });
-                } catch (error) {
-                    console.error('Error handling offer:', error);
-                }
-            }
-
-            async handleAnswer(data) {
-                console.log('Received answer from:', data.sender);
-                
-                const peerConnection = this.peers.get(data.sender);
-                if (peerConnection) {
-                    try {
-                        await peerConnection.setRemoteDescription(data.answer);
-                    } catch (error) {
-                        console.error('Error handling answer:', error);
-                    }
-                }
-            }
-
-            async handleIceCandidate(data) {
-                console.log('Received ICE candidate from:', data.sender);
-                
-                const peerConnection = this.peers.get(data.sender);
-                if (peerConnection) {
-                    try {
-                        await peerConnection.addIceCandidate(data.candidate);
-                    } catch (error) {
-                        console.error('Error handling ICE candidate:', error);
-                    }
-                }
-            }
-
-            setupDataChannel(dataChannel, peerId) {
-                dataChannel.onopen = () => {
-                    console.log(`Data channel opened with ${peerId}`);
-                    this.dataChannels.set(peerId, dataChannel);
-                    this.addSystemMessage(`✅ Connected to ${peerId.substring(0, 8)}`);
-                    this.updatePeersList(Array.from(this.peers.keys()));
-                };
-
-                dataChannel.onclose = () => {
-                    console.log(`Data channel closed with ${peerId}`);
-                    this.dataChannels.delete(peerId);
-                    this.addSystemMessage(`❌ Disconnected from ${peerId.substring(0, 8)}`);
-                    this.updatePeersList(Array.from(this.peers.keys()));
-                };
-
-                dataChannel.onmessage = (event) => {
-                    this.handleDataChannelMessage(event.data, peerId);
-                };
-            }
-
-            handleDataChannelMessage(data, senderId) {
-                try {
-                    const message = JSON.parse(data);
-                    
-                    if (message.type === 'text') {
-                        this.addMessage(message.content, senderId, false);
-                    } else if (message.type === 'file-start') {
-                        this.handleFileStart(message, senderId);
-                    } else if (message.type === 'file-chunk') {
-                        this.handleFileChunk(message, senderId);
-                    } else if (message.type === 'file-end') {
-                        this.handleFileEnd(message, senderId);
-                    }
-                } catch (error) {
-                    console.error('Error parsing message:', error);
-                }
-            }
-
-            sendMessage() {
-                const input = document.getElementById('messageInput');
-                const message = input.value.trim();
-                
-                if (message && this.dataChannels.size > 0) {
-                    // Send to all connected peers
-                    const messageData = JSON.stringify({
-                        type: 'text',
-                        content: message,
-                        timestamp: Date.now()
-                    });
-                    
-                    this.dataChannels.forEach((channel) => {
-                        if (channel.readyState === 'open') {
-                            channel.send(messageData);
-                        }
-                    });
-                    
-                    this.addMessage(message, this.myId, true);
-                    input.value = '';
-                    input.style.height = 'auto';
-                }
-            }
-
-            sendFile(file) {
-                if (this.dataChannels.size === 0) {
-                    alert('No connected peers to send file to.');
-                    return;
-                }
-
-                const CHUNK_SIZE = 16384; // 16KB chunks
-                const fileId = Math.random().toString(36).substring(2);
-                
-                this.addSystemMessage(`📎 Sending file: ${file.name} (${this.formatFileSize(file.size)})`);
-
-                // Send file start message
-                const fileStartMessage = JSON.stringify({
-                    type: 'file-start',
-                    fileId: fileId,
-                    fileName: file.name,
-                    fileSize: file.size,
-                    fileType: file.type
-                });
-
-                this.dataChannels.forEach((channel) => {
-                    if (channel.readyState === 'open') {
-                        channel.send(fileStartMessage);
-                    }
-                });
-
-                // Read and send file in chunks
-                const reader = new FileReader();
-                let offset = 0;
-
-                const readChunk = () => {
-                    const slice = file.slice(offset, offset + CHUNK_SIZE);
-                    reader.readAsArrayBuffer(slice);
-                };
-
-                reader.onload = (e) => {
-                    const chunk = new Uint8Array(e.target.result);
-                    const chunkMessage = JSON.stringify({
-                        type: 'file-chunk',
-                        fileId: fileId,
-                        chunk: Array.from(chunk),
-                        offset: offset
-                    });
-
-                    this.dataChannels.forEach((channel) => {
-                        if (channel.readyState === 'open') {
-                            channel.send(chunkMessage);
-                        }
-                    });
-
-                    offset += CHUNK_SIZE;
-                    
-                    if (offset < file.size) {
-                        readChunk();
-                    } else {
-                        // Send file end message
-                        const fileEndMessage = JSON.stringify({
-                            type: 'file-end',
-                            fileId: fileId
-                        });
-
-                        this.dataChannels.forEach((channel) => {
-                            if (channel.readyState === 'open') {
-                                channel.send(fileEndMessage);
-                            }
-                        });
-                        
-                        this.addSystemMessage(`✅ File sent: ${file.name}`);
-                    }
-                };
-
-                readChunk();
-            }
-
-            handleFileStart(message, senderId) {
-                this.fileTransfers.set(message.fileId, {
-                    fileName: message.fileName,
-                    fileSize: message.fileSize,
-                    fileType: message.fileType,
-                    chunks: [],
-                    receivedBytes: 0,
-                    senderId: senderId
-                });
-
-                this.addSystemMessage(`📥 Receiving file: ${message.fileName} from ${senderId.substring(0, 8)}`);
-            }
-
-            handleFileChunk(message, senderId) {
-                const transfer = this.fileTransfers.get(message.fileId);
-                if (transfer) {
-                    transfer.chunks.push({
-                        offset: message.offset,
-                        data: new Uint8Array(message.chunk)
-                    });
-                    transfer.receivedBytes += message.chunk.length;
-                }
-            }
-
-            handleFileEnd(message, senderId) {
-                const transfer = this.fileTransfers.get(message.fileId);
-                if (transfer) {
-                    // Sort chunks by offset and combine them
-                    transfer.chunks.sort((a, b) => a.offset - b.offset);
-                    
-                    const totalSize = transfer.chunks.reduce((size, chunk) => size + chunk.data.length, 0);
-                    const combinedArray = new Uint8Array(totalSize);
-                    let currentOffset = 0;
-                    
-                    transfer.chunks.forEach(chunk => {
-                        combinedArray.set(chunk.data, currentOffset);
-                        currentOffset += chunk.data.length;
-                    });
-                    
-                    // Create blob and download link
-                    const blob = new Blob([combinedArray], { type: transfer.fileType });
-                    const url = URL.createObjectURL(blob);
-                    
-                    this.addFileMessage(transfer.fileName, url, transfer.fileSize, senderId);
-                    this.fileTransfers.delete(message.fileId);
-                }
-            }
-
-            addMessage(content, senderId, isOwn) {
-                const chatArea = document.getElementById('chatArea');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${isOwn ? 'own' : ''}`;
-                
-                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const senderLabel = isOwn ? 'You' : senderId.substring(0, 8);
-                
-                messageDiv.innerHTML = `
-                    <div class="message-bubble">${this.escapeHtml(content)}</div>
-                    <div class="message-info">${senderLabel} • ${time}</div>
-                `;
-                
-                chatArea.appendChild(messageDiv);
-                chatArea.scrollTop = chatArea.scrollHeight;
-            }
-
-            addFileMessage(fileName, downloadUrl, fileSize, senderId) {
-                const chatArea = document.getElementById('chatArea');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-                
-                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const senderLabel = senderId.substring(0, 8);
-                
-                messageDiv.innerHTML = `
-                    <div class="message-bubble file-message">
-                        📎 File received: ${this.escapeHtml(fileName)}
-                        <br>Size: ${this.formatFileSize(fileSize)}
-                        <a href="${downloadUrl}" download="${fileName}" class="file-download">
-                            💾 Download
-                        </a>
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Lobby Tab -->
+            <div id="lobby" class="tab-content active">
+                <div class="content-grid">
+                    <div class="section">
+                        <h3>My Rooms</h3>
+                        <div id="myRooms" class="tile-grid"></div>
                     </div>
-                    <div class="message-info">${senderLabel} • ${time}</div>
-                `;
-                
-                chatArea.appendChild(messageDiv);
-                chatArea.scrollTop = chatArea.scrollHeight;
-            }
+                    <div class="section">
+                        <h3>Active Connections</h3>
+                        <div id="activeConnections" class="connection-list"></div>
+                    </div>
+                </div>
+            </div>
 
-            addSystemMessage(message) {
-                const chatArea = document.getElementById('chatArea');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'system-message';
-                messageDiv.textContent = message;
-                chatArea.appendChild(messageDiv);
-                chatArea.scrollTop = chatArea.scrollHeight;
-            }
+            <!-- Public Rooms Tab -->
+            <div id="public-rooms" class="tab-content">
+                <div class="section-header">
+                    <h3>Public Rooms</h3>
+                    <button id="createPublicRoomBtn" class="btn-primary">Create Room</button>
+                </div>
+                <div id="publicRoomsList" class="tile-grid"></div>
+            </div>
 
-            formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
+            <!-- Private Rooms Tab -->
+            <div id="private-rooms" class="tab-content">
+                <div class="section-header">
+                    <h3>Private Rooms</h3>
+                    <button id="createPrivateRoomBtn" class="btn-primary">Create Room</button>
+                </div>
+                <div class="join-private-section">
+                    <input type="text" id="privateRoomPin" placeholder="Enter 4-digit PIN" maxlength="4">
+                    <button id="joinPrivateRoomBtn">Join with PIN</button>
+                </div>
+                <div id="privateRoomsList" class="tile-grid"></div>
+            </div>
 
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-        }
+            <!-- Peers Tab -->
+            <div id="peers" class="tab-content">
+                <div class="section-header">
+                    <h3>Connected Peers</h3>
+                    <input type="text" id="peerSearchInput" placeholder="Search peers..." class="search-input">
+                </div>
+                <div id="peersList" class="tile-grid"></div>
+            </div>
+        </main>
 
-        // Initialize the app when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new P2PChat();
-        });
-    </script>
+        <!-- Chat Panel (Sidebar) -->
+        <aside id="chatPanel" class="chat-panel hidden">
+            <div class="chat-header">
+                <span id="chatTitle"></span>
+                <button id="closeChatBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-area">
+                <input type="file" id="fileInput" class="hidden" multiple>
+                <button id="attachFileBtn" class="attach-btn">📎</button>
+                <input type="text" id="messageInput" placeholder="Type a message..." class="message-input">
+                <button id="sendMessageBtn" class="send-btn">Send</button>
+            </div>
+            <div id="fileTransferProgress" class="file-progress hidden">
+                <div class="progress-info">
+                    <span id="progressFileName"></span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Room Creation Modal -->
+    <div id="roomModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="roomModalTitle">Create Room</h3>
+            <input type="text" id="roomNameInput" placeholder="Room name" maxlength="50">
+            <div id="pinSection" class="hidden">
+                <input type="text" id="roomPinInput" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}">
+            </div>
+            <div class="modal-actions">
+                <button id="cancelRoomBtn" class="btn-secondary">Cancel</button>
+                <button id="createRoomBtn" class="btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="notifications"></div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

@@ -1,29 +1,22 @@
 {
-  "name": "p2p-local-chat",
+  "name": "p2p-webchat",
   "version": "1.0.0",
-  "description": "Peer-to-peer chat and file sharing app for local networks",
+  "description": "A peer-to-peer webchat application with WebRTC and Socket.IO",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": [
-    "p2p",
-    "webrtc",
-    "chat",
-    "file-sharing",
-    "local-network"
-  ],
-  "author": "Your Name",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.21.2",
-    "socket.io": "^4.7.2"
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "bcryptjs": "^2.4.3",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "keywords": ["webrtc", "p2p", "chat", "socket.io", "lan"],
+  "author": "",
+  "license": "MIT"
 }
